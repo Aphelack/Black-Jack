@@ -1,0 +1,188 @@
+﻿@page "/"
+@using BlackJack.Client.Services
+@using BlackJack.Shared.Models
+@inject GameClientService GameService
+@implements IAsyncDisposable
+
+<PageTitle>Black Jack</PageTitle>
+
+<div class="main-container">
+    <h1>Black Jack</h1>
+
+    @if (!_isConnected)
+    {
+        <p>Connecting to server...</p>
+    }
+    else if (_gameState == null)
+    {
+        <div class="setup">
+            <div class="mb-3">
+                <label>Your Name:</label>
+                <input @bind="_playerName" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label>Room Name (Optional):</label>
+                <input @bind="_roomName" class="form-control" />
+            </div>
+            <button class="btn btn-primary" @onclick="CreateGame">Create Game</button>
+            
+            <div class="mt-3">
+                <label>Game ID to Join:</label>
+                <input @bind="_gameIdToJoin" class="form-control" />
+                <button class="btn btn-secondary" @onclick="JoinGame">Join Game</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>@(_gameState.RoomName ?? "Game Room")</h2>
+            <button class="btn btn-danger btn-sm" @onclick="LeaveGame">Leave Room</button>
+        </div>
+
+        <GameBoard GameState="_gameState" CurrentPlayerConnectionId="@GameService.ConnectionId" />
+
+        @if (_gameState.Status == GameStatus.WaitingForPlayers)
+        {
+            <div class="info-panel">
+                <p>Waiting for players to join... Share Game ID: <strong>@_gameState.GameId</strong></p>
+                <button class="btn btn-success" @onclick="StartGame">Start Game</button>
+            </div>
+        }
+        else if (_gameState.Status == GameStatus.InProgress)
+        {
+            <div class="actions">
+                <button class="btn btn-primary" @onclick="Hit" disabled="@(!IsMyTurn || (CurrentPlayer?.IsBusted ?? false))">Hit</button>
+                <button class="btn btn-warning" @onclick="Stand" disabled="@(!IsMyTurn)">Stand</button>
+            </div>
+        }
+        else if (_gameState.Status == GameStatus.Finished)
+        {
+            <div class="actions">
+                <button class="btn btn-success" @onclick="RestartGame">Play Again</button>
+                <button class="btn btn-primary" @onclick="Reset">Back to Menu</button>
+            </div>
+        }
+    }
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="alert alert-danger mt-3">@_errorMessage</div>
+    }
+</div>
+
+<style>
+    .main-container {
+        background-image: url('Hub/gameHubBackground.jpg');
+        background-size: cover;
+        min-height: 100vh;
+        padding: 20px;
+        color: white;
+    }
+    .setup, .actions, .info-panel, h1, p {
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+    .setup {
+        max-width: 400px;
+    }
+</style>
+
+@code {
+    private string _playerName = "Player";
+    private string _roomName;
+    private string _gameIdToJoin;
+    private GameState _gameState;
+    private bool _isConnected;
+    private string _errorMessage;
+    
+    private bool IsMyTurn => _gameState?.CurrentTurnConnectionId == GameService.ConnectionId;
+    private Player CurrentPlayer => _gameState?.Players.FirstOrDefault(p => p.ConnectionId == GameService.ConnectionId);
+    
+    protected override async Task OnInitializedAsync()
+    {
+        GameService.OnGameUpdated += HandleGameUpdate;
+        GameService.OnGameCreated += HandleGameCreated;
+        GameService.OnError += HandleError;
+        
+        await GameService.InitializeAsync();
+        _isConnected = true;
+    }
+
+    private void HandleGameUpdate(GameState state)
+    {
+        _gameState = state;
+        _errorMessage = null;
+        StateHasChanged();
+    }
+
+    private void HandleGameCreated(string gameId)
+    {
+        // We are already in the group and will receive update
+    }
+
+    private void HandleError(string message)
+    {
+        _errorMessage = message;
+        StateHasChanged();
+    }
+
+    private async Task CreateGame()
+    {
+        if (string.IsNullOrWhiteSpace(_playerName)) return;
+        await GameService.CreateGame(_playerName, _roomName);
+    }
+
+    private async Task JoinGame()
+    {
+        if (string.IsNullOrWhiteSpace(_playerName) || string.IsNullOrWhiteSpace(_gameIdToJoin)) return;
+        await GameService.JoinGame(_gameIdToJoin, _playerName);
+    }
+
+    private async Task LeaveGame()
+    {
+        if (_gameState == null) return;
+        await GameService.LeaveGame(_gameState.GameId);
+        _gameState = null;
+    }
+
+    private async Task RestartGame()
+    {
+        if (_gameState == null) return;
+        await GameService.RestartGame(_gameState.GameId);
+    }
+
+    private async Task StartGame()
+    {
+        if (_gameState == null) return;
+        await GameService.StartGame(_gameState.GameId);
+    }
+
+    private async Task Hit()
+    {
+        if (_gameState == null) return;
+        await GameService.Hit(_gameState.GameId);
+    }
+
+    private async Task Stand()
+    {
+        if (_gameState == null) return;
+        await GameService.Stand(_gameState.GameId);
+    }
+
+    private void Reset()
+    {
+        _gameState = null;
+        _errorMessage = null;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        GameService.OnGameUpdated -= HandleGameUpdate;
+        GameService.OnGameCreated -= HandleGameCreated;
+        GameService.OnError -= HandleError;
+        await GameService.DisposeAsync();
+    }
+}

@@ -1,0 +1,84 @@
+@using BlackJack.Shared.Models
+@if (GameState != null)
+{
+    <div class="game-board">
+        <h3>Game: @GameState.GameId</h3>
+        <div class="status">Status: @GameState.Status</div>
+        @if (!string.IsNullOrEmpty(GameState.WinnerMessage))
+        {
+            <div class="alert alert-success">@GameState.WinnerMessage</div>
+        }
+
+        <div class="players">
+            @foreach (var player in GameState.Players)
+            {
+                <div class="player @(player.ConnectionId == GameState.CurrentTurnConnectionId ? "active-turn" : "")">
+                    <h4>@player.Name @(player.IsDealer ? "(Dealer)" : "")</h4>
+                    <div>Score: @player.Score</div>
+                    @if (player.IsBusted) { <span class="badge bg-danger">Busted</span> }
+                    @if (player.IsStanding) { <span class="badge bg-secondary">Standing</span> }
+                    
+                    <div class="hand">
+                        @foreach (var card in player.Hand)
+                        {
+                            <div class="card-container">
+                                @if (IsCardVisible(player, card))
+                                {
+                                    <img src="@card.ImagePath" alt="@card.Rank of @card.Suit" class="playing-card" />
+                                }
+                                else
+                                {
+                                    <img src="Cards/cardBack.png" alt="Hidden Card" class="playing-card" />
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<style>
+    .game-board {
+        background-image: url('Hub/gameRoomBackground.jpg');
+        background-size: cover;
+        padding: 20px;
+        color: white;
+        min-height: 500px;
+        border-radius: 10px;
+    }
+    .playing-card {
+        width: 100px;
+        margin: 5px;
+    }
+    .player {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 10px;
+        border-radius: 5px;
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+    .active-turn {
+        border-color: #00ff00;
+        background-color: rgba(0, 100, 0, 0.6);
+    }
+    .hand {
+        display: flex;
+        flex-wrap: wrap;
+    }
+</style>
+
+@code {
+    [Parameter] public GameState GameState { get; set; }
+    [Parameter] public string CurrentPlayerConnectionId { get; set; }
+
+    private bool IsCardVisible(Player player, Card card)
+    {
+        if (card.IsHidden) return false;
+        if (GameState.Status == GameStatus.Finished) return true;
+        if (player.IsDealer) return true;
+        if (player.ConnectionId == CurrentPlayerConnectionId) return true;
+        return false;
+    }
+}
