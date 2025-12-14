@@ -72,6 +72,11 @@ namespace BlackJack.Client.Services
             await _hubConnection.SendAsync("StartGame", gameId);
         }
 
+        public async Task SetReady(string gameId)
+        {
+            await _hubConnection.SendAsync("SetReady", gameId);
+        }
+
         public async Task Hit(string gameId)
         {
             await _hubConnection.SendAsync("Hit", gameId);

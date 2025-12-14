@@ -6,9 +6,11 @@ This is a Blazor WebAssembly Hosted application using SignalR for real-time mult
 
 To play with friends on different devices (Ubuntu, Arch Linux, Windows, Android, iOS) while hosting on an Ubuntu machine, follow these steps.
 
-### 1. Host Setup (Ubuntu)
+### 1. Host Setup
 
-The "Host" is the computer running the server code.
+The "Host" is the computer running the server code. You can host on Ubuntu or Windows.
+
+#### Host Setup (Ubuntu)
 
 1.  **Open a Terminal** in the repository root.
 2.  **Find your Local IP Address**:
@@ -28,6 +30,39 @@ The "Host" is the computer running the server code.
 4.  **Run the Server**:
     Navigate to the solution folder and run the server, binding it to all network interfaces (`0.0.0.0`) so other devices can see it.
     ```bash
+    cd BlackJack
+    dotnet run --project BlackJack.Server/BlackJack.Server.csproj --urls "http://0.0.0.0:5220"
+    ```
+
+#### Host Setup (Windows)
+
+1.  **Open PowerShell or Command Prompt** in the repository root.
+2.  **Find your Local IP Address**:
+    Run the following command to see your IP address on the local network:
+    ```powershell
+    ipconfig
+    ```
+    *   Look for "IPv4 Address" under your active network adapter (usually "Wireless LAN adapter Wi-Fi" or "Ethernet adapter").
+    *   It will look something like `192.168.1.15` or `10.0.0.5`.
+    *   Write this down.
+
+3.  **Allow the Port through Windows Firewall**:
+    Open PowerShell as Administrator and run:
+    ```powershell
+    New-NetFirewallRule -DisplayName "BlackJack Server" -Direction Inbound -LocalPort 5220 -Protocol TCP -Action Allow
+    ```
+    Or use the Windows Firewall GUI:
+    *   Open "Windows Defender Firewall" → "Advanced settings"
+    *   Click "Inbound Rules" → "New Rule"
+    *   Select "Port" → Next
+    *   Select "TCP" and enter port `5220` → Next
+    *   Select "Allow the connection" → Next
+    *   Check all profiles → Next
+    *   Name it "BlackJack Server" → Finish
+
+4.  **Run the Server**:
+    Navigate to the solution folder and run the server, binding it to all network interfaces (`0.0.0.0`) so other devices can see it.
+    ```powershell
     cd BlackJack
     dotnet run --project BlackJack.Server/BlackJack.Server.csproj --urls "http://0.0.0.0:5220"
     ```
@@ -65,7 +100,7 @@ The "Client" is any device that wants to join the game. This can be the Host mac
     *   Enter the **Game ID** provided by Player 1.
     *   Click **Join Game**.
 
-3.  **Start**: Once everyone has joined, the Host clicks **Start Game**.
+3.  **Start**: Once everyone has joined, each player clicks **Ready**. The game will automatically start when all players are ready.
 
 ### Troubleshooting
 

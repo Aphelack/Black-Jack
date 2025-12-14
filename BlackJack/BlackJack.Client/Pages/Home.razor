@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using BlackJack.Client.Services
 @using BlackJack.Shared.Models
+@using System.Linq
 @inject GameClientService GameService
 @implements IAsyncDisposable
 
@@ -46,7 +47,29 @@
         {
             <div class="info-panel">
                 <p>Waiting for players to join... Share Game ID: <strong>@_gameState.GameId</strong></p>
-                <button class="btn btn-success" @onclick="StartGame">Start Game</button>
+                <div class="mb-3">
+                    <h4>Players:</h4>
+                    @foreach (var player in _gameState.Players.Where(p => !p.IsDealer))
+                    {
+                        <div class="player-status">
+                            <span>@player.Name</span>
+                            @if (player.IsReady)
+                            {
+                                <span class="badge bg-success">Ready</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Not Ready</span>
+                            }
+                        </div>
+                    }
+                </div>
+                @if (CurrentPlayer != null)
+                {
+                    <button class="btn @(CurrentPlayer.IsReady ? "btn-warning" : "btn-success")" @onclick="ToggleReady">
+                        @(CurrentPlayer.IsReady ? "Not Ready" : "Ready")
+                    </button>
+                }
             </div>
         }
         else if (_gameState.Status == GameStatus.InProgress)
@@ -78,15 +101,73 @@
         min-height: 100vh;
         padding: 20px;
         color: white;
+        background-color: #FFE4E1;
     }
     .setup, .actions, .info-panel, h1, p {
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: rgba(255, 20, 147, 0.8);
         padding: 15px;
         border-radius: 10px;
         margin-bottom: 10px;
+        border: 2px solid #FF69B4;
+        box-shadow: 0 4px 8px rgba(255, 105, 180, 0.3);
     }
     .setup {
         max-width: 400px;
+    }
+    .player-status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        margin: 5px 0;
+        background-color: rgba(255, 182, 193, 0.3);
+        border-radius: 5px;
+        border: 1px solid #FF69B4;
+    }
+    .btn-success {
+        background-color: #FF69B4;
+        border-color: #FF1493;
+    }
+    .btn-success:hover {
+        background-color: #FF1493;
+        border-color: #C71585;
+    }
+    .btn-warning {
+        background-color: #FFB6C1;
+        border-color: #FF69B4;
+        color: #8B008B;
+    }
+    .btn-warning:hover {
+        background-color: #FF69B4;
+        border-color: #FF1493;
+    }
+    .btn-danger {
+        background-color: #DC143C;
+        border-color: #C71585;
+    }
+    .btn-danger:hover {
+        background-color: #C71585;
+        border-color: #8B008B;
+    }
+    .btn-secondary {
+        background-color: #DB7093;
+        border-color: #FF69B4;
+        color: white;
+    }
+    .btn-secondary:hover {
+        background-color: #FF69B4;
+        border-color: #FF1493;
+    }
+    .badge.bg-success {
+        background-color: #FF69B4 !important;
+    }
+    .badge.bg-secondary {
+        background-color: #DB7093 !important;
+    }
+    .alert-danger {
+        background-color: #FFB6C1;
+        border-color: #FF1493;
+        color: #8B008B;
     }
 </style>
 
@@ -154,10 +235,10 @@
         await GameService.RestartGame(_gameState.GameId);
     }
 
-    private async Task StartGame()
+    private async Task ToggleReady()
     {
         if (_gameState == null) return;
-        await GameService.StartGame(_gameState.GameId);
+        await GameService.SetReady(_gameState.GameId);
     }
 
     private async Task Hit()

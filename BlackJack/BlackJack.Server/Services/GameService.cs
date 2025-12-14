@@ -65,6 +65,16 @@ namespace BlackJack.Server.Services
             return null;
         }
 
+        public GameState SetReady(string gameId, string connectionId)
+        {
+            if (_games.TryGetValue(gameId, out var gameRoom))
+            {
+                gameRoom.SetReady(connectionId);
+                return gameRoom.State;
+            }
+            return null;
+        }
+
         public async Task<GameState> Hit(string gameId, string connectionId, Func<GameState, Task> onStateChanged)
         {
              if (_games.TryGetValue(gameId, out var gameRoom))
@@ -154,6 +164,25 @@ namespace BlackJack.Server.Services
                 player.Score = 0;
                 player.IsBusted = false;
                 player.IsStanding = false;
+                player.IsReady = false;
+            }
+        }
+
+        public void SetReady(string connectionId)
+        {
+            if (State.Status != GameStatus.WaitingForPlayers) return;
+            
+            var player = State.Players.FirstOrDefault(p => p.ConnectionId == connectionId && !p.IsDealer);
+            if (player != null)
+            {
+                player.IsReady = !player.IsReady;
+                
+                // Check if all players are ready
+                var allPlayers = State.Players.Where(p => !p.IsDealer).ToList();
+                if (allPlayers.Count > 0 && allPlayers.All(p => p.IsReady))
+                {
+                    StartGame();
+                }
             }
         }
 

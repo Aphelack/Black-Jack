@@ -47,25 +47,39 @@
         color: white;
         min-height: 500px;
         border-radius: 10px;
+        border: 3px solid #FF69B4;
+        box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
     }
     .playing-card {
         width: 100px;
         margin: 5px;
     }
     .player {
-        border: 1px solid #ccc;
+        border: 2px solid #FFB6C1;
         padding: 10px;
         margin: 10px;
         border-radius: 5px;
-        background-color: rgba(0, 0, 0, 0.6);
+        background-color: rgba(255, 20, 147, 0.7);
     }
     .active-turn {
-        border-color: #00ff00;
-        background-color: rgba(0, 100, 0, 0.6);
+        border-color: #FF1493;
+        background-color: rgba(255, 105, 180, 0.8);
+        box-shadow: 0 0 15px #FF69B4;
     }
     .hand {
         display: flex;
         flex-wrap: wrap;
+    }
+    .badge.bg-danger {
+        background-color: #DC143C !important;
+    }
+    .badge.bg-secondary {
+        background-color: #DB7093 !important;
+    }
+    .alert-success {
+        background-color: #FFB6C1;
+        border-color: #FF69B4;
+        color: #8B008B;
     }
 </style>
 

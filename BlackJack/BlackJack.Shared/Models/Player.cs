@@ -11,5 +11,6 @@ namespace BlackJack.Shared.Models
         public bool IsDealer { get; set; }
         public bool IsBusted { get; set; }
         public bool IsStanding { get; set; }
+        public bool IsReady { get; set; }
     }
 }

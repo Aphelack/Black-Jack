@@ -64,6 +64,15 @@ namespace BlackJack.Server.Hubs
             }
         }
 
+        public async Task SetReady(string gameId)
+        {
+            var state = _gameService.SetReady(gameId, Context.ConnectionId);
+            if (state != null)
+            {
+                await Clients.Group(gameId).GameUpdated(state);
+            }
+        }
+
         public async Task Hit(string gameId)
         {
             await _gameService.Hit(gameId, Context.ConnectionId, async (state) => 
