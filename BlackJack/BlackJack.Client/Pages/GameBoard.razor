@@ -14,8 +14,8 @@
             {
                 <div class="player @(player.ConnectionId == GameState.CurrentTurnConnectionId ? "active-turn" : "")">
                     <h4>@player.Name @(player.IsDealer ? "(Dealer)" : "")</h4>
-                    <div>Score: @player.Score</div>
-                    @if (player.IsBusted) { <span class="badge bg-danger">Busted</span> }
+                    <div>Score: @(IsScoreVisible(player) ? player.Score.ToString() : "?")</div>
+                    @if (player.IsBusted && IsScoreVisible(player)) { <span class="badge bg-danger">Busted</span> }
                     @if (player.IsStanding) { <span class="badge bg-secondary">Standing</span> }
                     
                     <div class="hand">
@@ -78,6 +78,13 @@
         if (card.IsHidden) return false;
         if (GameState.Status == GameStatus.Finished) return true;
         if (player.IsDealer) return true;
+        if (player.ConnectionId == CurrentPlayerConnectionId) return true;
+        return false;
+    }
+
+    private bool IsScoreVisible(Player player)
+    {
+        if (GameState.Status == GameStatus.Finished) return true;
         if (player.ConnectionId == CurrentPlayerConnectionId) return true;
         return false;
     }
